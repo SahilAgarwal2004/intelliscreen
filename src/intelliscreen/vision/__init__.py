@@ -8,6 +8,10 @@ from intelliscreen.vision.face_detector import (
     HaarCascadeFaceDetector,
     YuNetFaceDetector,
 )
+from intelliscreen.vision.gaze import (
+    GazeEstimator,
+    GazeResult,
+)
 from intelliscreen.vision.head_pose import (
     HeadPoseEstimator,
     HeadPoseResult,
@@ -60,4 +64,7 @@ __all__ = [
     # 3D Head Pose Estimation
     "HeadPoseEstimator",
     "HeadPoseResult",
+    # Gaze Estimation & Deviation Tracking
+    "GazeEstimator",
+    "GazeResult",
 ]
