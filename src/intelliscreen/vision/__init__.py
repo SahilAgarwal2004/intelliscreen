@@ -30,6 +30,10 @@ from intelliscreen.vision.landmarks import (
     RIGHT_IRIS_INDICES,
     compute_eye_aspect_ratio,
 )
+from intelliscreen.vision.object_detector import (
+    ObjectDetectionResult,
+    ProctoringObjectDetector,
+)
 from intelliscreen.vision.preprocessor import (
     FrameQualityMetrics,
     PreprocessedFrame,
@@ -67,4 +71,7 @@ __all__ = [
     # Gaze Estimation & Deviation Tracking
     "GazeEstimator",
     "GazeResult",
+    # Secondary Object & Device Detection
+    "ObjectDetectionResult",
+    "ProctoringObjectDetector",
 ]
