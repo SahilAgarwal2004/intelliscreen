@@ -78,3 +78,6 @@ datasets/processed/
 *.wav
 *.mp3
 *.mov
+
+# Agents internal directory
+.agents/
