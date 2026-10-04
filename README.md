@@ -47,23 +47,23 @@ AUDIO STREAM ──► Speech-to-Text ──► Semantic Answer Evaluation
 
 ```
 IntelliScreen/
-├── .env.example              # Configurable thresholds template
-├── pyproject.toml            # Python packaging and tool configuration
 ├── README.md                 # Project documentation
-├── src/
-│   └── intelliscreen/
-│       ├── config/           # Pydantic Settings & threshold management
-│       ├── core/             # Base schemas, exceptions, and structured logger
-│       ├── vision/           # Computer vision pipelines (Face, Landmarks, Gaze, Objects)
-│       ├── behavior/         # Discrete state machine & temporal context engine
-│       ├── audio/            # Speech-to-text integration
-│       ├── nlp/              # Sentence embeddings & technical concept evaluator
-│       ├── fusion/           # Multimodal feature fusion & suspicion scorer
-│       └── api/              # FastAPI service & session management
-└── tests/
-    ├── conftest.py           # Shared fixtures
-    ├── unit/                 # Isolated module tests
-    └── integration/          # End-to-end pipeline tests
+└── services/                 # AI service, perception pipelines, tests & tools
+    ├── .env.example          # Configurable thresholds template
+    ├── .gitignore            # Git exclusion rules
+    ├── pyproject.toml        # Python packaging and tool configuration
+    ├── models/               # Cached model weights (YuNet, MediaPipe, YOLO)
+    ├── scripts/              # Verification & smoke test scripts
+    ├── src/
+    │   └── intelliscreen/
+    │       ├── config/       # Pydantic Settings & threshold management
+    │       ├── core/         # Base schemas, exceptions, and structured logger
+    │       ├── vision/       # Computer vision pipelines (Face, Landmarks, Gaze, Objects)
+    │       └── temporal/     # Temporal event engine & sliding window buffer
+    └── tests/
+        ├── conftest.py       # Shared fixtures
+        ├── fixtures/         # Sample media fixtures & annotated demo artifacts
+        └── unit/             # Isolated module tests
 ```
 
 ---
@@ -72,6 +72,7 @@ IntelliScreen/
 
 ### 1. Environment Setup
 ```bash
+cd services
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
@@ -79,10 +80,12 @@ pip install -e ".[dev]"
 
 ### 2. Configuration
 ```bash
+cd services
 cp .env.example .env
 ```
 
 ### 3. Run Test Suite
 ```bash
+cd services
 pytest
 ```
