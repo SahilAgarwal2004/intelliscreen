@@ -83,11 +83,11 @@ PNP_6POINT_INDICES: list[int] = [1, 152, 263, 33, 291, 61]
 CANONICAL_FACE_MODEL_3D: np.ndarray = np.array(
     [
         (0.0, 0.0, 0.0),          # Nose tip (index 1)
-        (0.0, -330.0, -65.0),     # Chin (index 152)
-        (225.0, 170.0, -135.0),   # Left eye outer corner (index 263)
-        (-225.0, 170.0, -135.0),  # Right eye outer corner (index 33)
-        (150.0, -150.0, -125.0),  # Left mouth corner (index 291)
-        (-150.0, -150.0, -125.0), # Right mouth corner (index 61)
+        (0.0, 330.0, 65.0),       # Chin (index 152) - Y down, Z depth
+        (225.0, -170.0, 135.0),   # Left eye outer corner (index 263) - X right, Y up, Z depth
+        (-225.0, -170.0, 135.0),  # Right eye outer corner (index 33) - X left, Y up, Z depth
+        (150.0, 150.0, 125.0),    # Left mouth corner (index 291) - X right, Y down, Z depth
+        (-150.0, 150.0, 125.0),   # Right mouth corner (index 61) - X left, Y down, Z depth
     ],
     dtype=np.float32,
 )

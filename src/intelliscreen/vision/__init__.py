@@ -8,6 +8,10 @@ from intelliscreen.vision.face_detector import (
     HaarCascadeFaceDetector,
     YuNetFaceDetector,
 )
+from intelliscreen.vision.head_pose import (
+    HeadPoseEstimator,
+    HeadPoseResult,
+)
 from intelliscreen.vision.landmarks import (
     CANONICAL_FACE_MODEL_3D,
     CHIN_INDICES,
@@ -53,4 +57,7 @@ __all__ = [
     "MOUTH_INDICES",
     "LEFT_IRIS_INDICES",
     "RIGHT_IRIS_INDICES",
+    # 3D Head Pose Estimation
+    "HeadPoseEstimator",
+    "HeadPoseResult",
 ]
