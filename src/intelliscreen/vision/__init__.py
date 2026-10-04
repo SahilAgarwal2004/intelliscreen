@@ -34,6 +34,11 @@ from intelliscreen.vision.object_detector import (
     ObjectDetectionResult,
     ProctoringObjectDetector,
 )
+from intelliscreen.vision.pipeline import (
+    VisionPipeline,
+    VisionPipelineConfig,
+    VisionPipelineResult,
+)
 from intelliscreen.vision.preprocessor import (
     FrameQualityMetrics,
     PreprocessedFrame,
@@ -74,4 +79,9 @@ __all__ = [
     # Secondary Object & Device Detection
     "ObjectDetectionResult",
     "ProctoringObjectDetector",
+    # Unified Vision Pipeline Orchestrator
+    "VisionPipeline",
+    "VisionPipelineConfig",
+    "VisionPipelineResult",
 ]
+
