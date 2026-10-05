@@ -1,0 +1,325 @@
+/* ==========================================================================
+   IntelliScreen Design System & CSS Variables
+   Dark Purple Premium SaaS Theme (Charcoal, Deep Purple, & Subtle Magenta)
+   ========================================================================== */
+
+:root {
+  /* Core Charcoal & Black Surfaces */
+  --bg-primary: #111111;
+  --bg-secondary: #161616;
+  --bg-tertiary: #1f1f1f;
+  --bg-card: #1a1a1a;
+  --bg-card-hover: #222222;
+  --bg-card-elevated: #242424;
+  --bg-glass: rgba(26, 26, 26, 0.85);
+
+  /* Primary Accent Purple & Magenta (Kodu Inspired) */
+  --brand-primary: #7c3aed;         /* Bright Purple */
+  --brand-primary-hover: #6d28d9;   /* Deep Purple */
+  --brand-deep: #6d28d9;
+  --brand-magenta: #c026d3;        /* Magenta Accent */
+  --brand-glow: rgba(124, 58, 237, 0.22);
+  --brand-magenta-glow: rgba(192, 38, 211, 0.2);
+
+  /* Semantic Feedback */
+  --success: #34d399;              /* Emerald / Mint */
+  --success-glow: rgba(52, 211, 153, 0.2);
+  --warning: #f59e0b;
+  --warning-glow: rgba(245, 158, 11, 0.2);
+  --danger: #ef4444;
+  --danger-glow: rgba(239, 68, 68, 0.25);
+
+  /* Typography Colors */
+  --text-primary: #ffffff;
+  --text-secondary: #a3a3a3;
+  --text-muted: #737373;
+  --text-link: #c084fc;
+
+  /* Borders & Dividers */
+  --border-subtle: #262626;
+  --border-strong: #303030;
+  --border-focus: #7c3aed;
+  --border-brand: rgba(124, 58, 237, 0.4);
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 6px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 0 30px var(--brand-glow);
+  --shadow-magenta: 0 0 30px var(--brand-magenta-glow);
+  --shadow-danger: 0 0 35px var(--danger-glow);
+
+  /* Typography */
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Transitions */
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Base Reset & Document Styles */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background-image: 
+    radial-gradient(circle at 50% 0%, rgba(109, 40, 217, 0.18) 0%, transparent 55%),
+    radial-gradient(circle at 85% 15%, rgba(192, 38, 211, 0.10) 0%, transparent 45%),
+    radial-gradient(circle at 15% 85%, rgba(109, 40, 217, 0.08) 0%, transparent 50%);
+  background-attachment: fixed;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: #2a2a2a;
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #383838;
+}
+
+/* Interactive Elements */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--text-link);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+a:hover {
+  color: #e879f9;
+}
+
+/* Glass & Card Panels */
+.glass-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  transition: border-color var(--transition-normal), box-shadow var(--transition-normal), transform var(--transition-fast);
+}
+.glass-panel:hover {
+  border-color: #404040;
+}
+
+.glow-purple {
+  box-shadow: 0 0 25px rgba(124, 58, 237, 0.3);
+}
+
+.glow-magenta {
+  box-shadow: 0 0 25px rgba(192, 38, 211, 0.3);
+}
+
+.glow-danger {
+  box-shadow: 0 0 25px rgba(239, 68, 68, 0.4);
+}
+
+/* Gradient Texts */
+.text-gradient {
+  background: linear-gradient(135deg, #ffffff 0%, #c084fc 50%, #e879f9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-purple {
+  background: linear-gradient(135deg, #a78bfa 0%, #e879f9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.text-gradient-danger {
+  background: linear-gradient(135deg, #f87171 0%, #fca5a5 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Buttons */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #7c3aed 0%, #c026d3 100%);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.925rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 4px 18px rgba(124, 58, 237, 0.38);
+  transition: all var(--transition-fast);
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(124, 58, 237, 0.55);
+  filter: brightness(1.08);
+}
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #1c1c1c;
+  color: var(--text-primary);
+  font-weight: 500;
+  font-size: 0.925rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  transition: all var(--transition-fast);
+}
+.btn-secondary:hover {
+  background: #242424;
+  border-color: #444444;
+}
+
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.925rem;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.35);
+  transition: all var(--transition-fast);
+}
+.btn-danger:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.5);
+}
+
+/* Form Controls */
+.form-input {
+  width: 100%;
+  padding: 12px 16px;
+  background: #161616;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+.form-input:focus {
+  outline: none;
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px var(--brand-glow);
+}
+.form-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.badge-indigo {
+  background: rgba(124, 58, 237, 0.14);
+  color: #c084fc;
+  border: 1px solid rgba(124, 58, 237, 0.35);
+}
+.badge-magenta {
+  background: rgba(192, 38, 211, 0.14);
+  color: #e879f9;
+  border: 1px solid rgba(192, 38, 211, 0.35);
+}
+.badge-success {
+  background: rgba(52, 211, 153, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.3);
+}
+.badge-warning {
+  background: rgba(245, 158, 11, 0.14);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+.badge-danger {
+  background: rgba(239, 68, 68, 0.14);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Animations */
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.03); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes radarScan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(1000%); }
+}
+
+.radar-beam {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #c026d3, transparent);
+  box-shadow: 0 0 12px #c026d3;
+  animation: radarScan 3s linear infinite;
+  pointer-events: none;
+}

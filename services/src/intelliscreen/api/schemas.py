@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field
 class SessionStartRequest(BaseModel):
     """Payload to initialize a candidate proctoring session."""
 
+    session_id: str | None = Field(default=None, description="Optional custom session identifier from backend.")
     candidate_id: str = Field(description="Unique candidate identifier or roll number.")
     test_id: str = Field(default="mcq_test", description="Identifier of the exam/test being administered.")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Custom exam metadata.")

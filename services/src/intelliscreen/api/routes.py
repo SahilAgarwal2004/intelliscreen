@@ -34,7 +34,11 @@ def health_check() -> dict[str, str]:
 @router.post("/sessions/start", response_model=SessionStartResponse, status_code=status.HTTP_201_CREATED)
 def start_session(req: SessionStartRequest) -> SessionStartResponse:
     """Initialize a new candidate exam session."""
-    session = manager.create_session(candidate_id=req.candidate_id, test_id=req.test_id)
+    session = manager.create_session(
+        candidate_id=req.candidate_id,
+        test_id=req.test_id,
+        session_id=req.session_id,
+    )
     return SessionStartResponse(
         session_id=session.session_id,
         candidate_id=session.candidate_id,
@@ -51,10 +55,7 @@ async def process_frame_multipart(
     timestamp_ms: float = Form(0.0),
 ) -> RealtimeFrameResponse:
     """Primary WebRTC ingestion endpoint receiving raw image frame bytes via multipart/form-data."""
-    try:
-        session = manager.get_session(session_id)
-    except SessionError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    session = manager.get_or_create_session(session_id)
 
     raw_bytes = await file.read()
     if not raw_bytes:
@@ -76,10 +77,7 @@ def process_frame_base64(
     req: FrameBase64Request,
 ) -> RealtimeFrameResponse:
     """Alternative frame ingestion endpoint receiving base64-encoded image payloads."""
-    try:
-        session = manager.get_session(session_id)
-    except SessionError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    session = manager.get_or_create_session(session_id)
 
     try:
         # Strip data URL prefix if present (e.g. data:image/jpeg;base64,...)
@@ -106,10 +104,7 @@ def record_test_incident(
     req: TestIncidentRequest,
 ) -> dict[str, Any]:
     """Log client-side exam incidents (e.g. candidate switched browser tab, exited fullscreen)."""
-    try:
-        session = manager.get_session(session_id)
-    except SessionError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
+    session = manager.get_or_create_session(session_id)
 
     incident_str = f"{req.incident_type} at {req.timestamp_ms:.0f}ms"
     session.test_incidents.append(incident_str)
