@@ -86,6 +86,16 @@ export const CandidatePortal = ({ initialShareableLink, onStartExam }) => {
     }
   }, [initialShareableLink]);
 
+  // Re-attach media stream when returning to the Camera step
+  useEffect(() => {
+    if (step === STEP_CAMERA && previewVideoRef.current && mediaStreamRef.current) {
+      if (previewVideoRef.current.srcObject !== mediaStreamRef.current) {
+        previewVideoRef.current.srcObject = mediaStreamRef.current;
+        previewVideoRef.current.play().catch(() => {});
+      }
+    }
+  }, [step]);
+
   // ── Step 2 → 3 ───────────────────────────────────────────────────────────
 
   const handleInfoNext = (e) => {

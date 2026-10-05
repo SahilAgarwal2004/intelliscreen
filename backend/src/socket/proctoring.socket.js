@@ -264,6 +264,20 @@ export const initializeSocket = (httpServer) => {
         message = "Candidate exited full-screen mode";
       }
 
+      // Forward the client incident to the Python AI service
+      const pythonServiceUrl = process.env.PYTHON_AI_SERVICE_URL;
+      if (pythonServiceUrl) {
+        try {
+          await axios.post(`${pythonServiceUrl}/sessions/${sessionId || attemptId}/test-incident`, {
+            incident_type: incidentType,
+            timestamp_ms: details?.timestamp || Date.now(),
+            details: details || {},
+          });
+        } catch (err) {
+          // silently catch
+        }
+      }
+
       await handleAnomalyEnforcement(io, socket, {
         attemptId,
         sessionId,
