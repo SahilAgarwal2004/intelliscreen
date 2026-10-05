@@ -7,7 +7,12 @@ export const LandingPage = ({ onGoToAuth, onGoToCandidate, onTestCodeSubmit }) =
   const handleCodeSubmit = (e) => {
     e.preventDefault();
     if (testCodeInput.trim()) {
-      onTestCodeSubmit(testCodeInput.trim());
+      let clean = testCodeInput.trim().split("?")[0].split("#")[0];
+      if (clean.includes("/")) {
+        const parts = clean.split("/").filter(Boolean);
+        clean = parts[parts.length - 1];
+      }
+      onTestCodeSubmit(clean.trim());
     }
   };
 

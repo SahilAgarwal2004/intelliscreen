@@ -15,13 +15,25 @@ export const CandidatePortal = ({ initialShareableLink, onStartExam }) => {
 
   const previewVideoRef = useRef(null);
 
+  // Helper to extract clean code if user pasted a full URL
+  const extractCode = (raw) => {
+    if (!raw) return "";
+    let clean = raw.trim().split("?")[0].split("#")[0];
+    if (clean.includes("/")) {
+      const parts = clean.split("/").filter(Boolean);
+      clean = parts[parts.length - 1];
+    }
+    return clean.trim();
+  };
+
   // Load test overview when link is entered
   const fetchTestDetails = async (code) => {
-    if (!code) return;
+    const cleanCode = extractCode(code);
+    if (!cleanCode) return;
     setError("");
     setLoading(true);
     try {
-      const res = await candidateApi.getTestInfo(code.trim());
+      const res = await candidateApi.getTestInfo(cleanCode);
       if (res.success) {
         setTestInfo(res.data);
       }
@@ -58,7 +70,8 @@ export const CandidatePortal = ({ initialShareableLink, onStartExam }) => {
 
   const handleStartExam = async (e) => {
     e.preventDefault();
-    if (!testInfo) {
+    const cleanCode = extractCode(shareableLink);
+    if (!testInfo || !cleanCode) {
       setError("Please enter a valid test link code.");
       return;
     }
@@ -77,7 +90,7 @@ export const CandidatePortal = ({ initialShareableLink, onStartExam }) => {
       }
 
       const res = await candidateApi.startAttempt({
-        shareableLink: shareableLink.trim(),
+        shareableLink: cleanCode,
         name: candidateName.trim(),
         email: candidateEmail.trim(),
         phone: candidatePhone.trim() || undefined,

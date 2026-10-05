@@ -12,7 +12,20 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 export const getTestInfoByLink = asyncHandler(async (req, res) => {
   const { shareableLink } = req.params;
 
-  const test = await Test.findOne({ shareableLink });
+  let cleanCode = (shareableLink || "").trim().split("?")[0].split("#")[0];
+  if (cleanCode.includes("/")) {
+    const parts = cleanCode.split("/").filter(Boolean);
+    cleanCode = parts[parts.length - 1];
+  }
+
+  const query = {
+    $or: [
+      { shareableLink: cleanCode },
+      ...(cleanCode.match(/^[0-9a-fA-F]{24}$/) ? [{ _id: cleanCode }] : []),
+    ],
+  };
+
+  const test = await Test.findOne(query);
 
   if (!test) {
     throw new ApiError(404, "Test not found. Please check your invitation link.");
@@ -61,7 +74,20 @@ export const startTestAttempt = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Shareable link, candidate name, and email are required");
   }
 
-  const test = await Test.findOne({ shareableLink });
+  let cleanCode = (shareableLink || "").trim().split("?")[0].split("#")[0];
+  if (cleanCode.includes("/")) {
+    const parts = cleanCode.split("/").filter(Boolean);
+    cleanCode = parts[parts.length - 1];
+  }
+
+  const query = {
+    $or: [
+      { shareableLink: cleanCode },
+      ...(cleanCode.match(/^[0-9a-fA-F]{24}$/) ? [{ _id: cleanCode }] : []),
+    ],
+  };
+
+  const test = await Test.findOne(query);
   if (!test) {
     throw new ApiError(404, "Test not found");
   }
