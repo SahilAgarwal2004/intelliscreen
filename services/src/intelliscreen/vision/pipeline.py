@@ -66,6 +66,8 @@ class VisionPipelineConfig:
     head_pitch_threshold: float = 25.0
     gaze_yaw_threshold: float = 25.0
     gaze_pitch_threshold: float = 20.0
+    gaze_iris_yaw_scale: float = 45.0
+    gaze_iris_pitch_scale: float = 35.0
     enable_objects: bool = True
     object_stride: int = 3
     object_confidence: float = 0.4
@@ -85,9 +87,12 @@ class VisionPipelineConfig:
             head_pitch_threshold=settings.head_pitch_threshold,
             gaze_yaw_threshold=settings.gaze_yaw_threshold,
             gaze_pitch_threshold=settings.gaze_pitch_threshold,
+            gaze_iris_yaw_scale=settings.gaze_iris_yaw_scale,
+            gaze_iris_pitch_scale=settings.gaze_iris_pitch_scale,
             object_stride=settings.vision_object_detection_stride,
             object_confidence=settings.object_confidence_threshold,
         )
+
 
 
 @dataclass
@@ -177,6 +182,8 @@ class VisionPipeline:
         self.gaze_estimator = gaze_estimator or GazeEstimator(
             yaw_threshold=self.config.gaze_yaw_threshold,
             pitch_threshold=self.config.gaze_pitch_threshold,
+            iris_yaw_scale=self.config.gaze_iris_yaw_scale,
+            iris_pitch_scale=self.config.gaze_iris_pitch_scale,
         )
         self.gaze_estimator._landmark_detector = self.landmark_detector
         self.gaze_estimator._head_pose_estimator = self.head_pose_estimator

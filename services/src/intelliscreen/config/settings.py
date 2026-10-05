@@ -40,18 +40,18 @@ class Settings(BaseSettings):
         description="Standardized frame height for computer vision input.",
     )
     vision_object_detection_stride: int = Field(
-        default=3,
+        default=1,
         ge=1,
         description="Execute object detection every N processed frames to conserve CPU.",
     )
     face_confidence_threshold: float = Field(
-        default=0.5,
+        default=0.45,
         ge=0.0,
         le=1.0,
         description="Minimum confidence to accept a face detection.",
     )
     object_confidence_threshold: float = Field(
-        default=0.4,
+        default=0.22,
         ge=0.0,
         le=1.0,
         description="Minimum confidence to accept an object detection (phone, book, person).",
@@ -59,25 +59,41 @@ class Settings(BaseSettings):
 
     # Angular Deviation Thresholds (Degrees)
     gaze_yaw_threshold: float = Field(
-        default=25.0,
+        default=16.0,
         gt=0.0,
         le=90.0,
         description="Yaw threshold (degrees) beyond which gaze is considered off-screen.",
     )
     gaze_pitch_threshold: float = Field(
-        default=20.0,
+        default=14.0,
         gt=0.0,
         le=90.0,
         description="Pitch threshold (degrees) beyond which gaze is considered off-screen.",
     )
+
+    # Iris-to-Degree Scaling — controls how much iris deflection contributes vs. head pose.
+    # Lower values = rely more on stable head pose, less on noisy iris position estimates.
+    # Human ocular range is approx ±30° H / ±25° V but iris pixel noise warrants dampening.
+    gaze_iris_yaw_scale: float = Field(
+        default=45.0,
+        gt=0.0,
+        le=120.0,
+        description="Angular multiplier mapping horizontal iris displacement to degrees.",
+    )
+    gaze_iris_pitch_scale: float = Field(
+        default=35.0,
+        gt=0.0,
+        le=120.0,
+        description="Angular multiplier mapping vertical iris displacement to degrees.",
+    )
     head_yaw_threshold: float = Field(
-        default=30.0,
+        default=20.0,
         gt=0.0,
         le=90.0,
         description="Yaw threshold (degrees) for detecting head turn.",
     )
     head_pitch_threshold: float = Field(
-        default=25.0,
+        default=18.0,
         gt=0.0,
         le=90.0,
         description="Pitch threshold (degrees) for detecting head tilt (up/down).",
@@ -85,31 +101,31 @@ class Settings(BaseSettings):
 
     # Temporal Duration Thresholds (Seconds)
     temporal_normal_look_away_max_sec: float = Field(
-        default=2.5,
+        default=1.2,
         ge=0.5,
         le=10.0,
         description="Max gaze deviation duration considered natural thinking time.",
     )
     temporal_suspicious_look_away_min_sec: float = Field(
-        default=4.0,
-        ge=1.0,
+        default=1.5,
+        ge=0.5,
         le=30.0,
         description="Minimum continuous gaze deviation to trigger a suspicious event.",
     )
     temporal_face_absence_alert_sec: float = Field(
-        default=3.0,
-        ge=1.0,
+        default=1.2,
+        ge=0.5,
         le=30.0,
         description="Duration of missing face before triggering absence alert.",
     )
     temporal_multiple_faces_alert_sec: float = Field(
-        default=1.0,
+        default=0.8,
         ge=0.5,
         le=10.0,
         description="Duration of multiple face presence before triggering alert.",
     )
     temporal_phone_presence_alert_sec: float = Field(
-        default=2.0,
+        default=0.8,
         ge=0.5,
         le=10.0,
         description="Duration of phone visibility before triggering unauthorized device alert.",

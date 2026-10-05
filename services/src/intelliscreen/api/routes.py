@@ -4,6 +4,7 @@ import base64
 import time
 from typing import Any
 
+import numpy as np
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 
 from intelliscreen.api.schemas import (
@@ -39,6 +40,42 @@ def start_session(req: SessionStartRequest) -> SessionStartResponse:
         test_id=req.test_id,
         session_id=req.session_id,
     )
+
+    # Process baseline photo if provided for examinee identity and resting gaze calibration
+    if req.baseline_photo:
+        try:
+            b_payload = req.baseline_photo
+            if "," in b_payload:
+                b_payload = b_payload.split(",", 1)[1]
+            raw_b = base64.b64decode(b_payload)
+            ref_prep = manager.vision_pipeline.preprocessor.process_bytes(raw_b, frame_index=0, timestamp_ms=0.0)
+            ref_res = manager.vision_pipeline.process_frame(ref_prep.bgr_image, frame_index=0, timestamp_ms=0.0)
+            if ref_res.face_result.face_detected and ref_res.face_result.primary_face:
+                box = ref_res.face_result.primary_face.box
+                session.baseline_photo = req.baseline_photo
+                session.baseline_face_aspect_ratio = float(box.width / (box.height + 1e-6))
+                # Store inter-eye and face area metrics for stronger identity verification
+                lm = ref_res.landmark_result
+                if lm.landmarks_detected and len(lm.landmark_points_2d) >= 474:
+                    pts = lm.landmark_points_2d
+                    # Left iris center [473], right iris center [468]
+                    left_iris = pts[473]
+                    right_iris = pts[468]
+                    eye_dist = float(np.linalg.norm(left_iris - right_iris))
+                    face_width = float(box.width + 1e-6)
+                    session.baseline_eye_dist_ratio = eye_dist / face_width
+                    session.baseline_face_area = float(box.width * box.height)
+                    # Nose tip [1] to chin [152] vs face height
+                    nose_tip = pts[1]
+                    chin = pts[152]
+                    nose_chin_dist = float(abs(chin[1] - nose_tip[1]))
+                    session.baseline_nose_chin_ratio = nose_chin_dist / (box.height + 1e-6)
+                if ref_res.gaze_result.gaze_detected:
+                    # Store baseline gaze per-session (NOT in global estimator — that's a singleton bug)
+                    session.baseline_gaze_resting = (ref_res.gaze_result.yaw, ref_res.gaze_result.pitch)
+        except Exception:
+            pass
+
     return SessionStartResponse(
         session_id=session.session_id,
         candidate_id=session.candidate_id,
@@ -180,6 +217,24 @@ def _execute_proctoring_pipeline(
         is_rgb=False,
     )
     obs = pipeline_result.observation
+    gaze_res = pipeline_result.gaze_result
+
+    # --- Per-session gaze baseline correction ---
+    # The gaze estimator is a shared singleton so we must NOT mutate its baseline.
+    # Instead, subtract each session's stored resting offset from the raw angles here.
+    corrected_gaze_yaw: float = gaze_res.yaw
+    corrected_gaze_pitch: float = gaze_res.pitch
+    if session.baseline_gaze_resting is not None and gaze_res.gaze_detected:
+        b_yaw, b_pitch = session.baseline_gaze_resting
+        corrected_gaze_yaw = gaze_res.yaw - b_yaw
+        corrected_gaze_pitch = gaze_res.pitch - b_pitch
+
+    gaze_yaw_thresh = manager.vision_pipeline.gaze_estimator.yaw_threshold
+    gaze_pitch_thresh = manager.vision_pipeline.gaze_estimator.pitch_threshold
+    is_looking_away_gaze = (
+        gaze_res.gaze_detected
+        and (abs(corrected_gaze_yaw) > gaze_yaw_thresh or abs(corrected_gaze_pitch) > gaze_pitch_thresh)
+    )
 
     # 3. Update Temporal Event Engine & 30s Rolling Buffer
     new_events = session.temporal_engine.process_observation(obs)
@@ -200,13 +255,77 @@ def _execute_proctoring_pipeline(
 
     # Extract primary flags
     gaze_dir = obs.gaze.direction.value if obs.gaze else "CENTER"
-    is_looking_away = obs.gaze.is_deviated() if obs.gaze else False
+    is_looking_away = is_looking_away_gaze
     if obs.head_pose and obs.head_pose.is_looking_away():
         is_looking_away = True
 
     phone_detected = pipeline_result.object_result.phone_detected
     laptop_detected = pipeline_result.object_result.laptop_detected
     secondary_person = pipeline_result.object_result.secondary_person_detected or obs.face_count > 1
+
+    # --- Multi-metric examinee identity verification ---
+    # Uses 3 landmark-geometry signals; requires ≥2 to deviate to flag mismatch.
+    examinee_verified = True
+    has_any_baseline = (
+        session.baseline_face_aspect_ratio is not None
+        or session.baseline_eye_dist_ratio is not None
+        or session.baseline_face_area is not None
+    )
+    if has_any_baseline and obs.face_detected and obs.primary_face_box:
+        lm_now = pipeline_result.landmark_result
+        deviation_count = 0
+
+        # Metric 1: Bounding box aspect ratio (width/height) — tightened to 20%
+        curr_ratio = obs.primary_face_box.width / (obs.primary_face_box.height + 1e-6)
+        if session.baseline_face_aspect_ratio is not None:
+            ratio_diff = abs(curr_ratio - session.baseline_face_aspect_ratio) / (session.baseline_face_aspect_ratio + 1e-6)
+            if ratio_diff > 0.20:
+                deviation_count += 1
+
+        # Metric 2: Normalized inter-eye distance (eye_dist / face_width)
+        if (
+            session.baseline_eye_dist_ratio is not None
+            and lm_now.landmarks_detected
+            and len(lm_now.landmark_points_2d) >= 474
+        ):
+            pts = lm_now.landmark_points_2d
+            left_iris = pts[473]
+            right_iris = pts[468]
+            curr_eye_dist = float(np.linalg.norm(left_iris - right_iris))
+            curr_eye_ratio = curr_eye_dist / (obs.primary_face_box.width + 1e-6)
+            eye_ratio_diff = abs(curr_eye_ratio - session.baseline_eye_dist_ratio) / (session.baseline_eye_dist_ratio + 1e-6)
+            if eye_ratio_diff > 0.22:
+                deviation_count += 1
+
+        # Metric 3: Face area ratio — detects gross size changes (distance change = different person or covered face)
+        if session.baseline_face_area is not None:
+            curr_area = float(obs.primary_face_box.width * obs.primary_face_box.height)
+            area_ratio = curr_area / (session.baseline_face_area + 1e-6)
+            # Very different area: either tiny (covering face) or huge (different distance) — flag if < 0.35 or > 2.8
+            if area_ratio < 0.35 or area_ratio > 2.8:
+                deviation_count += 1
+
+        # Require ≥2 metrics to deviate before flagging — avoids false positives from single noisy signal
+        if deviation_count >= 2:
+            examinee_verified = False
+
+    # Determine decisive malpractice flag and severity
+    has_active_violation = (
+        len(active_events) > 0
+        or phone_detected
+        or secondary_person
+        or (not examinee_verified)
+    )
+
+    is_malpractice = evaluation.is_malpractice_flagged or has_active_violation
+    severity_val = evaluation.severity.value
+
+    if phone_detected or not examinee_verified:
+        severity_val = "CRITICAL"
+        is_malpractice = True
+    elif has_active_violation and severity_val == "LOW":
+        severity_val = "HIGH"
+        is_malpractice = True
 
     return RealtimeFrameResponse(
         session_id=session.session_id,
@@ -221,7 +340,9 @@ def _execute_proctoring_pipeline(
         secondary_person_detected=secondary_person,
         active_events=[e.event_type.value for e in active_events],
         instantaneous_suspicion_score=evaluation.score,
-        severity=evaluation.severity.value,
-        is_malpractice_flagged=evaluation.is_malpractice_flagged,
+        severity=severity_val,
+        is_malpractice_flagged=is_malpractice,
+        examinee_verified=examinee_verified,
         latency_ms=round(total_latency_ms, 2),
     )
+

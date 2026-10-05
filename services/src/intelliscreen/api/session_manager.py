@@ -27,6 +27,13 @@ class ActiveSession:
     total_frames: int = 0
     test_incidents: list[str] = field(default_factory=list)
     latest_evaluation: ProctoringEvaluation | None = None
+    baseline_photo: str | None = None
+    baseline_face_aspect_ratio: float | None = None
+    baseline_gaze_resting: tuple[float, float] | None = None
+    # Stronger biometric baselines from landmark geometry
+    baseline_eye_dist_ratio: float | None = None   # inter-eye distance / face width
+    baseline_face_area: float | None = None         # baseline bounding box pixel area
+    baseline_nose_chin_ratio: float | None = None   # nose-to-chin / face height
     is_active: bool = True
 
 

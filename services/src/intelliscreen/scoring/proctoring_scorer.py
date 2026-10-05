@@ -48,24 +48,24 @@ class ProctoringScorer:
         # 1. Critical Hard Violations (Immediate Escalation)
         # -------------------------------------------------------------
         if window_summary.phone_detected_ratio > 0.0:
-            # Phone visibility is a high-severity violation in an online exam
-            phone_penalty = min(50.0, 30.0 + window_summary.phone_detected_ratio * 40.0)
+            # Phone visibility is an immediate critical violation in an online exam
+            phone_penalty = min(95.0, 75.0 + window_summary.phone_detected_ratio * 20.0)
             score += phone_penalty
             contributing_factors.append(
                 f"Unauthorized mobile phone detected in candidate workspace (presence ratio: {window_summary.phone_detected_ratio:.1%})"
             )
 
         if window_summary.multiple_faces_ratio > 0.0:
-            # Secondary person presence
-            score += 35.0
+            # Secondary person presence is a high-severity violation
+            score += 75.0
             contributing_factors.append("Multiple individuals detected in candidate camera frame")
 
         # -------------------------------------------------------------
         # 2. Prolonged Gaze Deviations & Off-Screen Look-Away
         # -------------------------------------------------------------
-        if window_summary.gaze_deviation_ratio > 0.15:
-            # Scale penalty based on proportion of time spent looking away from screen
-            gaze_penalty = min(35.0, window_summary.gaze_deviation_ratio * 50.0)
+        if window_summary.gaze_deviation_ratio > 0.08:
+            # Sustained off-screen look-away triggers malpractice threshold (>= 60)
+            gaze_penalty = min(80.0, 60.0 + window_summary.gaze_deviation_ratio * 30.0)
             score += gaze_penalty
             contributing_factors.append(
                 f"Sustained off-screen gaze deviation ({window_summary.gaze_deviation_ratio:.1%} of recent 30s window)"
@@ -73,14 +73,15 @@ class ProctoringScorer:
         else:
             if window_summary.gaze_deviation_ratio > 0.0:
                 mitigating_factors.append(
-                    "Brief gaze deviations (<2.5s) classified as natural cognitive pause / reading question"
+                    "Brief gaze deviations (<1.2s) classified as natural cognitive pause / reading question"
                 )
 
         # -------------------------------------------------------------
         # 3. Candidate Desk Absence / Camera Disappearance
         # -------------------------------------------------------------
-        if window_summary.face_absence_ratio > 0.10:
-            absence_penalty = min(40.0, window_summary.face_absence_ratio * 50.0)
+        if window_summary.face_absence_ratio > 0.05:
+            # Candidate leaving desk triggers high severity
+            absence_penalty = min(85.0, 65.0 + window_summary.face_absence_ratio * 30.0)
             score += absence_penalty
             contributing_factors.append(
                 f"Candidate absent from camera view ({window_summary.face_absence_ratio:.1%} of recent 30s window)"

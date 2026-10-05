@@ -13,6 +13,10 @@ const proctoringSessionSchema = new mongoose.Schema(
             type: String,
             default: null,
         },
+        baselinePhoto: {
+            type: String,
+            default: null,
+        },
         status: {
             type: String,
             enum: [

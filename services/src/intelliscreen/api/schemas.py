@@ -12,6 +12,7 @@ class SessionStartRequest(BaseModel):
     session_id: str | None = Field(default=None, description="Optional custom session identifier from backend.")
     candidate_id: str = Field(description="Unique candidate identifier or roll number.")
     test_id: str = Field(default="mcq_test", description="Identifier of the exam/test being administered.")
+    baseline_photo: str | None = Field(default=None, description="Base64-encoded initial reference photo of examinee.")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Custom exam metadata.")
 
 
@@ -57,6 +58,7 @@ class RealtimeFrameResponse(BaseModel):
     instantaneous_suspicion_score: float = Field(ge=0.0, le=100.0)
     severity: str
     is_malpractice_flagged: bool
+    examinee_verified: bool = True
     latency_ms: float
 
 

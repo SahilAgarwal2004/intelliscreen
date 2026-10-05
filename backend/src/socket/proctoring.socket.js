@@ -145,9 +145,10 @@ export const initializeSocket = (httpServer) => {
       socket.sessionId = sessionId;
 
       try {
-        await ProctoringSession.findOneAndUpdate(
+        const sessionRecord = await ProctoringSession.findOneAndUpdate(
           { attemptId },
-          { socketId: socket.id, lastActivityAt: new Date() }
+          { socketId: socket.id, lastActivityAt: new Date() },
+          { new: true }
         );
         console.log(`[Socket] Socket ${socket.id} joined room ${roomName}`);
         socket.emit("joined_session", {
@@ -156,7 +157,7 @@ export const initializeSocket = (httpServer) => {
           message: "Real-time proctoring connection established",
         });
 
-        // Initialize session in Python AI service if configured
+        // Initialize session in Python AI service with candidate baseline photo
         const pythonServiceUrl = process.env.PYTHON_AI_SERVICE_URL;
         if (pythonServiceUrl) {
           axios
@@ -166,8 +167,9 @@ export const initializeSocket = (httpServer) => {
                 session_id: String(sessionId || attemptId),
                 candidate_id: `cand_${attemptId}`,
                 test_id: "mcq_test",
+                baseline_photo: sessionRecord?.baselinePhoto || null,
               },
-              { timeout: 2000 }
+              { timeout: 4000 }
             )
             .catch(() => {});
         }
@@ -204,6 +206,7 @@ export const initializeSocket = (httpServer) => {
             secondary_person_detected,
             phone_detected,
             is_malpractice_flagged,
+            examinee_verified = true,
             severity,
           } = aiResponse.data;
 
@@ -214,6 +217,9 @@ export const initializeSocket = (httpServer) => {
             if (phone_detected) {
               anomalyType = "other";
               message = "Mobile phone or unauthorized electronic device detected in frame";
+            } else if (examinee_verified === false) {
+              anomalyType = "multiple_faces";
+              message = "Examinee verification failed: detected candidate face does not match check-in reference photo";
             } else if (!face_detected) {
               anomalyType = "no_face_detected";
               message = "Candidate face is not detected in camera frame";
@@ -225,12 +231,15 @@ export const initializeSocket = (httpServer) => {
               message = "Candidate is looking away from the screen for prolonged periods";
             }
 
+            const normalizedSeverity = (severity || "medium").toLowerCase();
+            const finalSeverity = normalizedSeverity === "critical" ? "high" : (["low", "medium", "high"].includes(normalizedSeverity) ? normalizedSeverity : "medium");
+
             await handleAnomalyEnforcement(io, socket, {
               attemptId,
               sessionId,
               anomalyType,
               message,
-              severity: severity || "medium",
+              severity: finalSeverity,
             });
           }
         } catch (axiosErr) {

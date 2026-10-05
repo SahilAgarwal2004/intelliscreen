@@ -86,7 +86,7 @@ export const ProctorCamera = ({
           console.warn("MediaRecorder audio slice init error:", recErr);
         }
 
-        // Setup Canvas Snapshot Interval (1.5 FPS = every 700ms)
+        // Setup Canvas Snapshot Interval (2.0 FPS = every 500ms at 640x480)
         let frameIndex = 0;
         frameInterval = setInterval(() => {
           if (!videoRef.current || !canvasRef.current || !socket || !socket.connected) return;
@@ -96,12 +96,12 @@ export const ProctorCamera = ({
           const ctx = canvas.getContext("2d");
 
           if (video.videoWidth > 0 && video.videoHeight > 0) {
-            canvas.width = 320;
-            canvas.height = 240;
-            ctx.drawImage(video, 0, 0, 320, 240);
+            canvas.width = 640;
+            canvas.height = 480;
+            ctx.drawImage(video, 0, 0, 640, 480);
 
-            // Compress to JPEG 0.55 quality
-            const frameBase64 = canvas.toDataURL("image/jpeg", 0.55);
+            // Compress to JPEG 0.65 quality for crisp eye landmarks and object edge detection
+            const frameBase64 = canvas.toDataURL("image/jpeg", 0.65);
 
             socket.emit("media_frame", {
               attemptId,
@@ -111,7 +111,7 @@ export const ProctorCamera = ({
               timestamp: Date.now(),
             });
           }
-        }, 700);
+        }, 500);
 
       } catch (err) {
         console.error("Camera & Mic capture error:", err);

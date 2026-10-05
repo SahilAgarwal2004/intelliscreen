@@ -68,7 +68,7 @@ export const getTestInfoByLink = asyncHandler(async (req, res) => {
 // @route   POST /api/candidate/start-attempt
 // @access  Public
 export const startTestAttempt = asyncHandler(async (req, res) => {
-  const { shareableLink, name, email, phone } = req.body;
+  const { shareableLink, name, email, phone, baselinePhoto } = req.body;
 
   if (!shareableLink || !name || !email) {
     throw new ApiError(400, "Shareable link, candidate name, and email are required");
@@ -189,6 +189,7 @@ export const startTestAttempt = asyncHandler(async (req, res) => {
       status: "active",
       strikes: 0,
       maxStrikes: 3,
+      baselinePhoto: baselinePhoto || null,
       lastActivityAt: now,
     });
   }
