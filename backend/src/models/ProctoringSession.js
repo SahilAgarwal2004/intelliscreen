@@ -39,6 +39,10 @@ const proctoringSessionSchema = new mongoose.Schema(
             type: Date,
             default: Date.now,
         },
+        lastStrikeAt: {
+            type: Date,
+            default: null,
+        },
         terminatedAt: {
             type: Date,
             default: null,

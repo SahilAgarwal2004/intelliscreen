@@ -4,6 +4,11 @@ import AnomalyLog from "../models/AnomalyLog.js";
 import ProctoringSession from "../models/ProctoringSession.js";
 import TestAttempt from "../models/TestAttempt.js";
 
+// Cooldown between successive strikes to allow candidate to see warning and correct posture
+const STRIKE_COOLDOWN_MS = process.env.STRIKE_COOLDOWN_MS
+  ? parseInt(process.env.STRIKE_COOLDOWN_MS, 10)
+  : 15000;
+
 // Helper to record an anomaly and enforce the 3-strike rule
 export const handleAnomalyEnforcement = async (
   io,
@@ -24,9 +29,35 @@ export const handleAnomalyEnforcement = async (
       return;
     }
 
+    // Fairness cooldown check: prevent rapid-fire strikes (e.g. within 15 seconds)
+    if (!metadata.bypassCooldown && session.lastStrikeAt) {
+      const elapsedMs = Date.now() - new Date(session.lastStrikeAt).getTime();
+      if (elapsedMs < STRIKE_COOLDOWN_MS) {
+        console.log(
+          `[Proctoring] Strike cooldown active (${Math.round((STRIKE_COOLDOWN_MS - elapsedMs) / 1000)}s remaining). Anomaly logged without incrementing strikes.`
+        );
+
+        const suppressedLog = await AnomalyLog.create({
+          attemptId: session.attemptId,
+          sessionId: session._id,
+          type: anomalyType,
+          severity,
+          message: `[Active Warning] ${message}`,
+          confidence,
+          strikeIssued: false,
+          strikeNumber: session.strikes,
+          detectedAt: new Date(),
+          metadata: { ...metadata, cooldownSuppressed: true, elapsedMs },
+        });
+
+        return { session, anomalyLog: suppressedLog, cooldownSuppressed: true };
+      }
+    }
+
     // Increment strikes
     const newStrikeCount = session.strikes + 1;
     session.strikes = Math.min(newStrikeCount, 3);
+    session.lastStrikeAt = new Date();
     session.lastActivityAt = new Date();
 
     const isTerminated = session.strikes >= 3;
@@ -124,6 +155,22 @@ export const initializeSocket = (httpServer) => {
           status: "connected",
           message: "Real-time proctoring connection established",
         });
+
+        // Initialize session in Python AI service if configured
+        const pythonServiceUrl = process.env.PYTHON_AI_SERVICE_URL;
+        if (pythonServiceUrl) {
+          axios
+            .post(
+              `${pythonServiceUrl}/sessions/start`,
+              {
+                session_id: String(sessionId || attemptId),
+                candidate_id: `cand_${attemptId}`,
+                test_id: "mcq_test",
+              },
+              { timeout: 2000 }
+            )
+            .catch(() => {});
+        }
       } catch (err) {
         console.error("[Socket] Error registering socketId in session:", err.message);
       }
@@ -155,6 +202,7 @@ export const initializeSocket = (httpServer) => {
             face_count,
             is_looking_away,
             secondary_person_detected,
+            phone_detected,
             is_malpractice_flagged,
             severity,
           } = aiResponse.data;
@@ -163,7 +211,10 @@ export const initializeSocket = (httpServer) => {
             let anomalyType = "other";
             let message = "Suspicious behavior detected";
 
-            if (!face_detected) {
+            if (phone_detected) {
+              anomalyType = "other";
+              message = "Mobile phone or unauthorized electronic device detected in frame";
+            } else if (!face_detected) {
               anomalyType = "no_face_detected";
               message = "Candidate face is not detected in camera frame";
             } else if (secondary_person_detected || face_count > 1) {
@@ -222,6 +273,7 @@ export const initializeSocket = (httpServer) => {
         sessionId,
         anomalyType: anomalyType || "no_face_detected",
         message: message || "Simulated test violation",
+        metadata: { bypassCooldown: true },
       });
     });
 

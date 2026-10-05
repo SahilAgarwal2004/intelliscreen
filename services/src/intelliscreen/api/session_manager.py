@@ -48,18 +48,32 @@ class SessionManager:
                 cls._instance = cls()
             return cls._instance
 
-    def create_session(self, candidate_id: str, test_id: str = "mcq_test") -> ActiveSession:
+    def create_session(
+        self, candidate_id: str, test_id: str = "mcq_test", session_id: str | None = None
+    ) -> ActiveSession:
         """Initialize and register a new exam session."""
-        session_id = str(uuid.uuid4())
+        assigned_id = session_id.strip() if session_id and session_id.strip() else str(uuid.uuid4())
         session = ActiveSession(
-            session_id=session_id,
+            session_id=assigned_id,
             candidate_id=candidate_id,
             test_id=test_id,
         )
         with self._lock:
-            self._sessions[session_id] = session
-        logger.info(f"Initialized exam session {session_id} for candidate {candidate_id}")
+            self._sessions[assigned_id] = session
+        logger.info(f"Initialized exam session {assigned_id} for candidate {candidate_id}")
         return session
+
+    def get_or_create_session(
+        self, session_id: str, candidate_id: str = "candidate", test_id: str = "mcq_test"
+    ) -> ActiveSession:
+        """Retrieve existing active session or provision a new one if not found."""
+        with self._lock:
+            session = self._sessions.get(session_id)
+            if session is not None and session.is_active:
+                return session
+
+        logger.info(f"Session '{session_id}' not found in registry; auto-provisioning.")
+        return self.create_session(candidate_id=candidate_id, test_id=test_id, session_id=session_id)
 
     def get_session(self, session_id: str) -> ActiveSession:
         """Retrieve an existing session or raise SessionError."""
